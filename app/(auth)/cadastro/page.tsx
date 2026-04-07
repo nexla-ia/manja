@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 export default function CadastroPage() {
@@ -9,9 +10,9 @@ export default function CadastroPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const supabase = createClient();
+  const router = useRouter();
 
   const handleCadastro = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,7 +24,6 @@ export default function CadastroPage() {
       password,
       options: {
         data: { full_name: nome },
-        emailRedirectTo: `${window.location.origin}/api/auth/callback`,
       },
     });
 
@@ -31,22 +31,9 @@ export default function CadastroPage() {
       setError(error.message);
       setLoading(false);
     } else {
-      setSuccess(true);
+      router.push("/dashboard");
     }
   };
-
-  if (success) {
-    return (
-      <div className="bg-[#0d1410] border border-[#1e2e20] rounded-2xl p-8 text-center">
-        <div className="text-4xl mb-4">✉️</div>
-        <h2 className="text-white font-bold text-xl mb-2">Confirme seu email</h2>
-        <p className="text-gray-400 text-sm">
-          Enviamos um link de confirmação para <span className="text-green-400">{email}</span>.
-          Acesse seu email e clique no link para ativar sua conta.
-        </p>
-      </div>
-    );
-  }
 
   return (
     <div className="bg-[#0d1410] border border-[#1e2e20] rounded-2xl p-8">
