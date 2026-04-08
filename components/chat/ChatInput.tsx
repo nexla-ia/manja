@@ -1,8 +1,7 @@
 "use client";
 
-import { useRef, KeyboardEvent } from "react";
-import { Send } from "lucide-react";
-import { cn } from "@/lib/utils/cn";
+import { useRef, KeyboardEvent, useState } from "react";
+import { ArrowUp } from "lucide-react";
 
 interface ChatInputProps {
   value: string;
@@ -14,6 +13,7 @@ interface ChatInputProps {
 
 export function ChatInput({ value, onChange, onSend, loading, disabled }: ChatInputProps) {
   const ref = useRef<HTMLTextAreaElement>(null);
+  const [focused, setFocused] = useState(false);
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -28,47 +28,53 @@ export function ChatInput({ value, onChange, onSend, loading, disabled }: ChatIn
     ref.current.style.height = Math.min(ref.current.scrollHeight, 140) + "px";
   };
 
+  const canSend = !!value.trim() && !loading && !disabled;
+
   return (
-    <div className="p-4" style={{ borderTop: "1px solid #1E1E2E" }}>
+    <div className="px-4 pb-4 pt-2" style={{ borderTop: "1px solid var(--border)" }}>
       <div
-        className={cn(
-          "flex items-end gap-3 rounded-2xl px-4 py-3 transition-all duration-200",
-          disabled ? "opacity-60" : ""
-        )}
+        className="flex items-end gap-3 rounded-2xl px-4 py-3 transition-all duration-200"
         style={{
-          background: "#14141E",
-          border: "1px solid #1E1E2E",
-          outline: "none",
-        }}
-        onFocusCapture={e => {
-          if (!disabled) (e.currentTarget as HTMLElement).style.border = "1px solid #6EE7B7";
-        }}
-        onBlurCapture={e => {
-          (e.currentTarget as HTMLElement).style.border = "1px solid #1E1E2E";
+          background: "var(--card)",
+          border: focused ? "1px solid var(--mint-dim)" : "1px solid var(--border-hi)",
+          boxShadow: focused ? "0 0 0 3px rgba(0,200,125,0.07)" : "none",
+          opacity: disabled ? 0.55 : 1,
         }}
       >
         <textarea
           ref={ref}
           value={value}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={e => onChange(e.target.value)}
           onKeyDown={handleKeyDown}
           onInput={handleInput}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
           disabled={disabled || loading}
-          placeholder="Peça uma apresentação, trabalho, prova de estudo, análise de edital..."
+          placeholder="Peça uma apresentação, trabalho, análise de edital..."
           rows={1}
           className="flex-1 bg-transparent text-sm resize-none outline-none leading-relaxed"
-          style={{ color: "#F1F5F9", maxHeight: 140, caretColor: "#6EE7B7" }}
+          style={{
+            color: "var(--text)",
+            caretColor: "var(--mint)",
+            maxHeight: 140,
+          }}
         />
+
         <button
           onClick={onSend}
-          disabled={!value.trim() || loading || disabled}
-          className="w-9 h-9 rounded-xl flex items-center justify-center transition-all flex-shrink-0 btn-shimmer disabled:opacity-40 disabled:cursor-not-allowed"
-          style={{ boxShadow: value.trim() && !disabled ? "0 4px 15px rgba(110,231,183,0.3)" : undefined }}
+          disabled={!canSend}
+          className="w-8 h-8 rounded-xl flex items-center justify-center transition-all flex-shrink-0 disabled:opacity-30 disabled:cursor-not-allowed"
+          style={canSend ? {
+            background: "linear-gradient(135deg, var(--mint-dim), var(--blue))",
+            boxShadow: "0 4px 12px var(--glow-mint)",
+          } : {
+            background: "var(--border-hi)",
+          }}
         >
-          <Send size={15} className="text-white" />
+          <ArrowUp size={14} className="text-white" />
         </button>
       </div>
-      <p className="text-center text-xs mt-2" style={{ color: "#334155" }}>
+      <p className="text-center text-xs mt-2" style={{ color: "var(--text-3)" }}>
         Enter para enviar · Shift+Enter para nova linha
       </p>
     </div>

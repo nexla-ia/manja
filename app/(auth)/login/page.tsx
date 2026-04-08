@@ -5,19 +5,17 @@ import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
+  const [email, setEmail]       = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading]   = useState(false);
+  const [error, setError]       = useState<string | null>(null);
   const supabase = createClient();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
-
     const { error } = await supabase.auth.signInWithPassword({ email, password });
-
     if (error) {
       setError("Email ou senha incorretos.");
       setLoading(false);
@@ -34,19 +32,25 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="bg-[#0d1410] border border-[#1e2e20] rounded-2xl p-8">
-      {/* Logo */}
-      <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold text-white">
-          <span className="text-green-500">Manja</span>.ai
+    <div className="anim-fade-up">
+      <div className="mb-8">
+        <h1 className="font-syne font-bold text-2xl mb-1.5" style={{ letterSpacing: "-0.02em" }}>
+          Bem-vindo de volta
         </h1>
-        <p className="text-gray-400 text-sm mt-1">Seu parceiro de estudos com IA</p>
+        <p className="text-sm" style={{ color: "var(--text-2)" }}>Entre na sua conta para continuar.</p>
       </div>
 
       {/* Google */}
       <button
         onClick={handleGoogle}
-        className="w-full flex items-center justify-center gap-3 bg-white text-gray-800 rounded-xl py-3 font-semibold text-sm hover:bg-gray-100 transition mb-6"
+        className="w-full flex items-center justify-center gap-3 rounded-2xl py-3 text-sm font-semibold mb-6 transition-all"
+        style={{
+          background: "var(--card)",
+          border: "1px solid var(--border-hi)",
+          color: "var(--text)",
+        }}
+        onMouseEnter={e => (e.currentTarget.style.borderColor = "rgba(0,229,160,0.3)")}
+        onMouseLeave={e => (e.currentTarget.style.borderColor = "var(--border-hi)")}
       >
         <svg width="18" height="18" viewBox="0 0 18 18">
           <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/>
@@ -58,55 +62,56 @@ export default function LoginPage() {
       </button>
 
       <div className="flex items-center gap-3 mb-6">
-        <div className="flex-1 h-px bg-[#1e2e20]" />
-        <span className="text-gray-500 text-xs">ou</span>
-        <div className="flex-1 h-px bg-[#1e2e20]" />
+        <div className="flex-1 h-px" style={{ background: "var(--border)" }} />
+        <span className="text-xs" style={{ color: "var(--text-3)" }}>ou</span>
+        <div className="flex-1 h-px" style={{ background: "var(--border)" }} />
       </div>
 
-      {/* Form */}
       <form onSubmit={handleLogin} className="space-y-4">
         {error && (
-          <div className="bg-red-500/10 border border-red-500/30 rounded-lg px-4 py-3 text-red-400 text-sm">
+          <div className="rounded-xl px-4 py-3 text-sm" style={{ background: "rgba(244,63,94,0.08)", border: "1px solid rgba(244,63,94,0.25)", color: "var(--rose)" }}>
             {error}
           </div>
         )}
 
         <div>
-          <label className="text-gray-400 text-sm mb-1.5 block">Email</label>
+          <label className="text-xs font-semibold mb-2 block" style={{ color: "var(--text-2)" }}>Email</label>
           <input
             type="email"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={e => setEmail(e.target.value)}
             placeholder="seu@email.com"
             required
-            className="w-full bg-[#111a13] border border-[#1e2e20] rounded-xl px-4 py-3 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-green-600 transition"
+            className="input-glow w-full rounded-xl px-4 py-3 text-sm"
           />
         </div>
 
         <div>
-          <label className="text-gray-400 text-sm mb-1.5 block">Senha</label>
+          <div className="flex items-center justify-between mb-2">
+            <label className="text-xs font-semibold" style={{ color: "var(--text-2)" }}>Senha</label>
+          </div>
           <input
             type="password"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={e => setPassword(e.target.value)}
             placeholder="••••••••"
             required
-            className="w-full bg-[#111a13] border border-[#1e2e20] rounded-xl px-4 py-3 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-green-600 transition"
+            className="input-glow w-full rounded-xl px-4 py-3 text-sm"
           />
         </div>
 
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-green-600 hover:bg-green-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-xl py-3 text-sm transition"
+          className="btn-primary w-full py-3.5 rounded-2xl text-sm font-bold disabled:opacity-50 disabled:cursor-not-allowed mt-2"
         >
           {loading ? "Entrando..." : "Entrar"}
         </button>
       </form>
 
-      <p className="text-center text-gray-500 text-sm mt-6">
+      <p className="text-center text-sm mt-6" style={{ color: "var(--text-2)" }}>
         Não tem conta?{" "}
-        <Link href="/cadastro" className="text-green-500 hover:text-green-400 font-medium">
+        <Link href="/cadastro" className="font-semibold transition-colors hover:opacity-80 grad-text">
           Cadastre-se grátis
         </Link>
       </p>
