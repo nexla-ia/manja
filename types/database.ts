@@ -23,6 +23,7 @@ export interface Chat {
   user_id: string;
   titulo: string;
   tipo_ultimo: AgenteTipo | null;
+  folder_id: string | null;
   criado_em: string;
   atualizado_em: string;
 }
