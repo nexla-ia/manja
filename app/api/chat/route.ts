@@ -107,13 +107,16 @@ export async function POST(request: NextRequest) {
           .eq("id", chatId);
       }
 
-      // Incrementa contador de gerações
+      // Incrementa tokens e gerações
+      const tokensUsados = (response.usage.input_tokens ?? 0) + (response.usage.output_tokens ?? 0);
+      const updates: Record<string, number> = {
+        tokens_mes: (profile.tokens_mes ?? 0) + tokensUsados,
+        mensagens_mes: (profile.mensagens_mes ?? 0) + 1,
+      };
       if (fileResult) {
-        await supabase
-          .from("profiles")
-          .update({ geracoes_mes: profile.geracoes_mes + 1 })
-          .eq("id", user.id);
+        updates.geracoes_mes = (profile.geracoes_mes ?? 0) + 1;
       }
+      await supabase.from("profiles").update(updates).eq("id", user.id);
     }
 
     return NextResponse.json({ message, fileResult });

@@ -7,7 +7,18 @@
       "Bash(git -C /c/manja-ai add app/\\\\\\(auth\\\\\\)/cadastro/page.tsx)",
       "Bash(git -C /c/manja-ai commit -m ':*)",
       "Bash(git -C /c/manja-ai push)",
-      "Bash(git -C /c/manja-ai log --oneline -5)"
+      "Bash(git -C /c/manja-ai log --oneline -5)",
+      "Bash(git -C /c/manja-ai log --oneline -3)",
+      "Bash(git -C /c/manja-ai add app/api/files/route.ts)",
+      "Bash(git -C /c/manja-ai commit -m \"fix: remove trailing slash from FILE_SERVICE_URL to fix double-slash on /gerar\")",
+      "Read(//c/Users/Admne/Downloads/manja-files/manja-files/**)",
+      "Bash(zip -r \"../manja-files-fixed.zip\" manja-files/)",
+      "Bash(powershell -Command \"Compress-Archive -Path 'manja-files\\\\*' -DestinationPath '..\\\\manja-files-fixed.zip' -Force\")",
+      "Bash(powershell -Command \"Compress-Archive -Path '.' -DestinationPath 'C:/Users/Admne/Downloads/manja-files-pptxjs.zip' -Force\")"
+    ],
+    "additionalDirectories": [
+      "C:\\Users\\Admne\\Downloads",
+      "C:\\Users\\Admne\\Downloads\\manja-files\\manja-files\\{routes,generators}"
     ]
   }
 }

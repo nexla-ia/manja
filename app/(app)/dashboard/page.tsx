@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { ArrowRight, MessageSquare, Sparkles } from "lucide-react";
+import { PLANS, formatTokens } from "@/lib/stripe/plans";
 
 const TIPOS = [
   { tipo: "apresentacao", icon: "🎯", label: "Apresentação",    desc: "Slides prontos pra apresentar",  color: "#F59E0B" },
@@ -67,6 +68,40 @@ export default async function DashboardPage() {
               ? "Plano Pro ativo · gerações ilimitadas."
               : `${5 - (profile?.geracoes_mes ?? 0)} gerações restantes este mês.`}
           </p>
+
+          {/* Usage mini-bar */}
+          {profile?.plano !== "pro" && (
+            <Link href="/configuracoes" className="group mt-4 flex items-center gap-4 rounded-xl px-4 py-3 transition-all hover:border-white/10"
+                  style={{ background: "var(--card)", border: "1px solid var(--border)", display: "inline-flex" }}>
+              {(() => {
+                const tokens = (profile?.tokens_mes as number) ?? 0;
+                const limit  = PLANS.free.tokens_mes;
+                const pct    = Math.min(100, (tokens / limit) * 100);
+                const warn   = pct >= 80;
+                return (
+                  <>
+                    <div>
+                      <p className="text-xs font-medium mb-1.5" style={{ color: "var(--text-3)" }}>
+                        Uso do plano Free
+                      </p>
+                      <div className="w-40 h-1.5 rounded-full" style={{ background: "var(--border)" }}>
+                        <div className="h-1.5 rounded-full transition-all duration-700"
+                             style={{
+                               width: `${pct}%`,
+                               background: warn ? "var(--rose)" : "var(--mint)",
+                               boxShadow: warn ? "0 0 8px var(--rose)" : "0 0 8px var(--mint)",
+                             }} />
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs font-bold">{formatTokens(tokens)}</p>
+                      <p className="text-xs" style={{ color: "var(--text-3)" }}>de {formatTokens(limit)} tokens</p>
+                    </div>
+                  </>
+                );
+              })()}
+            </Link>
+          )}
         </div>
 
         {/* ── Material grid ───────────────── */}
