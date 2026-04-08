@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const FILE_SERVICE_URL = process.env.FILE_SERVICE_URL;
+    const FILE_SERVICE_URL = process.env.FILE_SERVICE_URL?.replace(/\/$/, "");
     const FILE_SERVICE_SECRET = process.env.FILE_SERVICE_SECRET;
 
     const response = await fetch(`${FILE_SERVICE_URL}/gerar`, {
