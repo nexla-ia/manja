@@ -42,12 +42,49 @@ APRESENTAÇÃO:
   "slides": [
     {
       "titulo": "Título do slide",
+      "layout": "default|two-col|grid|quote|stats|timeline",
+
+      // layout "default" → lista com bullets numerados
       "corpo": ["bullet 1", "bullet 2", "bullet 3"],
-      "notas": "Notas do apresentador",
-      "layout": "default|cover|two-col"
+
+      // layout "two-col" → duas colunas comparativas (use quando houver contraste/comparação)
+      // precisa de pelo menos 4 itens em "corpo" OU use col1/col2:
+      "col1": "Vantagens", "col2": "Desvantagens",
+      "corpo": ["item col1 A", "item col1 B", "item col2 A", "item col2 B"],
+
+      // layout "grid" → cards visuais em grade 2x2 ou 3x2 (ideal para exemplos, categorias, tópicos)
+      "items": [
+        { "titulo": "Card 1", "desc": "Descrição curta do card 1" },
+        { "titulo": "Card 2", "desc": "Descrição curta do card 2" }
+      ],
+
+      // layout "quote" → slide de destaque/citação/conceito-chave impactante
+      "quote": "Texto de destaque ou conceito importante que merece atenção visual",
+      "autor": "Fonte ou contexto (opcional)",
+
+      // layout "stats" → números de impacto (ideal para dados, percentuais, fatos)
+      "stats": [
+        { "valor": "85%", "label": "Das empresas usam IA", "desc": "Fonte: McKinsey 2024" },
+        { "valor": "3x", "label": "Mais produtividade", "desc": "Com ferramentas de IA" }
+      ],
+
+      // layout "timeline" → linha do tempo (ideal para história, evolução, cronologia)
+      "eventos": [
+        { "data": "1950", "titulo": "Evento principal", "desc": "Descrição curta" }
+      ]
     }
   ]
 }
+
+REGRAS DE LAYOUT (OBRIGATÓRIO seguir para variar a apresentação):
+- Nunca use o mesmo layout em slides consecutivos
+- Use "quote" para definições importantes ou frases de impacto (1x por apresentação)
+- Use "stats" quando houver dados/números/percentuais (1x por apresentação)
+- Use "grid" para listar exemplos, categorias ou conceitos (máx 6 itens)
+- Use "two-col" para comparações, prós/contras, antes/depois
+- Use "timeline" para histórico, evolução ou sequência cronológica
+- Use "default" para explicações com 3-5 tópicos aprofundados
+- Uma apresentação de 8 slides deve usar no mínimo 3 layouts diferentes
 
 TRABALHO ou RESUMO:
 {
