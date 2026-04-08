@@ -9,7 +9,8 @@ import { cn } from "@/lib/utils/cn";
 import {
   Plus, Settings, LogOut, Zap, Sparkles, MoreHorizontal,
   Pencil, Trash2, FolderPlus, FolderOpen, Folder, ChevronRight,
-  Layers, FileText, ClipboardList, BookOpen, CalendarDays, FileSearch, MessageSquare, Check, X,
+  Layers, FileText, ClipboardList, BookOpen, CalendarDays, FileSearch,
+  MessageSquare, Check, X, Menu,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -22,31 +23,295 @@ const TIPO_META: Record<string, { Icon: LucideIcon; color: string }> = {
   edital:       { Icon: FileSearch,    color: "#F59E0B" },
 };
 
-interface FolderItem {
-  id: string;
-  nome: string;
+interface FolderItem { id: string; nome: string; }
+
+// ── Shared prop types ─────────────────────────────────────────────────────────
+
+interface ChatRowProps {
+  chat: Chat;
+  indent?: boolean;
+  pathname: string;
+  openMenu: string | null;
+  renamingChat: string | null;
+  renameValue: string;
+  movingChat: string | null;
+  folders: FolderItem[];
+  renameRef: React.RefObject<HTMLInputElement>;
+  setOpenMenu: (v: string | null) => void;
+  setRenameValue: (v: string) => void;
+  setMovingChat: (v: string | null) => void;
+  onRenameConfirm: () => void;
+  onRenameCancel: () => void;
+  onStartRename: (chat: Chat) => void;
+  onDelete: (id: string) => void;
+  onMoveToFolder: (chatId: string, folderId: string | null) => void;
 }
 
-type ChatWithFolder = Chat;
+interface FolderRowProps {
+  folder: FolderItem;
+  chatsInside: Chat[];
+  expanded: boolean;
+  openMenu: string | null;
+  renamingFolder: string | null;
+  renameValue: string;
+  renameRef: React.RefObject<HTMLInputElement>;
+  chatRowProps: Omit<ChatRowProps, "chat" | "indent">;
+  setOpenMenu: (v: string | null) => void;
+  setRenameValue: (v: string) => void;
+  onToggle: (id: string) => void;
+  onRenameConfirm: () => void;
+  onRenameCancel: () => void;
+  onStartRename: (folder: FolderItem) => void;
+  onDelete: (id: string) => void;
+}
+
+// ── ChatRow ───────────────────────────────────────────────────────────────────
+
+function ChatRow({
+  chat, indent = false, pathname, openMenu, renamingChat, renameValue,
+  movingChat, folders, renameRef, setOpenMenu, setRenameValue, setMovingChat,
+  onRenameConfirm, onRenameCancel, onStartRename, onDelete, onMoveToFolder,
+}: ChatRowProps) {
+  const isActive   = pathname === `/chat/${chat.id}`;
+  const meta       = TIPO_META[chat.tipo_ultimo ?? ""];
+  const color      = meta?.color ?? "var(--text-3)";
+  const Icon       = meta?.Icon ?? MessageSquare;
+  const isRenaming = renamingChat === chat.id;
+  const isMenuOpen = openMenu === chat.id;
+  const isMoving   = movingChat === chat.id;
+
+  return (
+    <div className="relative group/row">
+      {/* Moving overlay */}
+      {isMoving && (
+        <div className="fixed inset-0 z-40" onClick={() => setMovingChat(null)}>
+          <div
+            className="absolute w-44 rounded-xl overflow-hidden shadow-2xl z-50"
+            style={{ background: "var(--card)", border: "1px solid var(--border-hi)", top: "auto", left: "15rem", marginTop: "-1rem" }}
+            onClick={e => e.stopPropagation()}
+          >
+            <p className="text-xs px-3 py-2 font-semibold" style={{ color: "var(--text-3)", borderBottom: "1px solid var(--border)" }}>
+              Mover para
+            </p>
+            <button onClick={() => onMoveToFolder(chat.id, null)}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-xs transition-colors hover:bg-white/[0.04] text-left"
+                    style={{ color: "var(--text-2)" }}>
+              <MessageSquare size={11} /> Sem pasta
+            </button>
+            {folders.map(f => (
+              <button key={f.id} onClick={() => onMoveToFolder(chat.id, f.id)}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-xs transition-colors hover:bg-white/[0.04] text-left"
+                      style={{ color: "var(--text-2)" }}>
+                <Folder size={11} style={{ color: "var(--mint)" }} /> {f.nome}
+              </button>
+            ))}
+            <button onClick={() => setMovingChat(null)}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-xs transition-colors hover:bg-white/[0.04] text-left"
+                    style={{ color: "var(--text-3)", borderTop: "1px solid var(--border)" }}>
+              <X size={11} /> Cancelar
+            </button>
+          </div>
+        </div>
+      )}
+
+      <div
+        className={cn(
+          "relative flex items-center gap-2 rounded-lg text-xs transition-all duration-150 group/chat",
+          indent ? "ml-3" : "",
+          isActive ? "" : "hover:bg-white/[0.03]",
+        )}
+        style={{ color: isActive ? "var(--text)" : "var(--text-2)", background: isActive ? `${color}0D` : undefined }}
+      >
+        {/* Active bar */}
+        <div className={cn(
+          "absolute left-0 top-1/2 -translate-y-1/2 w-0.5 rounded-r-full transition-all duration-300",
+          isActive ? "h-5 opacity-100" : "h-3 opacity-0 group-hover/chat:opacity-40"
+        )} style={{ background: color }} />
+
+        {isRenaming ? (
+          <div className="flex items-center gap-1 flex-1 px-2 py-1.5 ml-1">
+            <input
+              ref={renameRef}
+              value={renameValue}
+              onChange={e => setRenameValue(e.target.value)}
+              onKeyDown={e => { if (e.key === "Enter") onRenameConfirm(); if (e.key === "Escape") onRenameCancel(); }}
+              className="flex-1 text-xs rounded px-1.5 py-0.5 outline-none min-w-0"
+              style={{ background: "var(--border)", color: "var(--text)", border: "1px solid var(--mint-dim)" }}
+            />
+            <button onClick={onRenameConfirm} className="p-0.5 rounded hover:text-white" style={{ color: "var(--mint)" }}>
+              <Check size={12} />
+            </button>
+            <button onClick={onRenameCancel} className="p-0.5 rounded hover:text-white" style={{ color: "var(--text-3)" }}>
+              <X size={12} />
+            </button>
+          </div>
+        ) : (
+          <>
+            <Link href={`/chat/${chat.id}`} className="flex items-center gap-2 flex-1 px-2.5 py-2 ml-0.5 min-w-0">
+              <Icon size={11} className="flex-shrink-0" style={{ color: isActive ? color : "var(--text-3)" }} strokeWidth={1.5} />
+              <span className="truncate">{chat.titulo}</span>
+            </Link>
+
+            {/* Three-dot button */}
+            <div className={cn(
+              "flex items-center gap-0.5 pr-1.5 flex-shrink-0 transition-opacity duration-150",
+              isMenuOpen ? "opacity-100" : "opacity-0 group-hover/row:opacity-100"
+            )}>
+              <button
+                onClick={e => { e.stopPropagation(); setOpenMenu(isMenuOpen ? null : chat.id); }}
+                className="p-1 rounded transition-colors hover:bg-white/10"
+                style={{ color: "var(--text-3)" }}
+              >
+                <MoreHorizontal size={12} />
+              </button>
+            </div>
+
+            {/* Dropdown */}
+            {isMenuOpen && (
+              <div
+                className="absolute right-0 top-full mt-0.5 w-44 rounded-xl shadow-2xl z-50 overflow-hidden"
+                style={{ background: "var(--card)", border: "1px solid var(--border-hi)" }}
+                onClick={e => e.stopPropagation()}
+              >
+                <button onClick={() => onStartRename(chat)}
+                        className="w-full flex items-center gap-2.5 px-3 py-2.5 text-xs transition-colors hover:bg-white/[0.05] text-left">
+                  <Pencil size={11} style={{ color: "var(--blue)" }} />
+                  <span style={{ color: "var(--text-2)" }}>Renomear</span>
+                </button>
+                <button onClick={() => { setMovingChat(chat.id); setOpenMenu(null); }}
+                        className="w-full flex items-center gap-2.5 px-3 py-2.5 text-xs transition-colors hover:bg-white/[0.05] text-left">
+                  <FolderPlus size={11} style={{ color: "var(--mint)" }} />
+                  <span style={{ color: "var(--text-2)" }}>Mover para pasta</span>
+                </button>
+                <div style={{ height: "1px", background: "var(--border)", margin: "2px 0" }} />
+                <button onClick={() => { onDelete(chat.id); setOpenMenu(null); }}
+                        className="w-full flex items-center gap-2.5 px-3 py-2.5 text-xs transition-colors hover:bg-red-500/10 text-left">
+                  <Trash2 size={11} className="text-red-400" />
+                  <span className="text-red-400">Excluir</span>
+                </button>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── FolderRow ─────────────────────────────────────────────────────────────────
+
+function FolderRow({
+  folder, chatsInside, expanded, openMenu, renamingFolder, renameValue, renameRef,
+  chatRowProps, setOpenMenu, setRenameValue, onToggle, onRenameConfirm, onRenameCancel,
+  onStartRename, onDelete,
+}: FolderRowProps) {
+  const isRenaming = renamingFolder === folder.id;
+  const isMenuOpen = openMenu === `folder-${folder.id}`;
+
+  return (
+    <div>
+      <div className="relative group/folder flex items-center gap-1 rounded-lg transition-all duration-150 hover:bg-white/[0.03]">
+        <button
+          onClick={() => onToggle(folder.id)}
+          className="flex items-center gap-1.5 flex-1 px-2 py-1.5 text-xs min-w-0"
+        >
+          <ChevronRight size={11} className="flex-shrink-0 transition-transform duration-200"
+                       style={{ color: "var(--text-3)", transform: expanded ? "rotate(90deg)" : "rotate(0deg)" }} />
+          {expanded
+            ? <FolderOpen size={12} style={{ color: "var(--mint)" }} className="flex-shrink-0" strokeWidth={1.5} />
+            : <Folder     size={12} style={{ color: "var(--mint)" }} className="flex-shrink-0" strokeWidth={1.5} />
+          }
+          {isRenaming ? (
+            <input
+              ref={renameRef}
+              value={renameValue}
+              onChange={e => setRenameValue(e.target.value)}
+              onKeyDown={e => { if (e.key === "Enter") onRenameConfirm(); if (e.key === "Escape") onRenameCancel(); }}
+              onClick={e => e.stopPropagation()}
+              className="flex-1 text-xs rounded px-1 py-0.5 outline-none min-w-0"
+              style={{ background: "var(--border)", color: "var(--text)", border: "1px solid var(--mint-dim)" }}
+            />
+          ) : (
+            <span className="truncate font-medium text-xs" style={{ color: "var(--text-2)" }}>{folder.nome}</span>
+          )}
+          {!isRenaming && (
+            <span className="ml-auto flex-shrink-0 mr-1" style={{ color: "var(--text-3)", fontSize: "10px" }}>
+              {chatsInside.length > 0 ? chatsInside.length : ""}
+            </span>
+          )}
+        </button>
+
+        {!isRenaming && (
+          <div className={cn(
+            "flex items-center pr-1 flex-shrink-0 transition-opacity duration-150",
+            isMenuOpen ? "opacity-100" : "opacity-0 group-hover/folder:opacity-100"
+          )}>
+            <button
+              onClick={e => { e.stopPropagation(); setOpenMenu(isMenuOpen ? null : `folder-${folder.id}`); }}
+              className="p-1 rounded transition-colors hover:bg-white/10"
+              style={{ color: "var(--text-3)" }}
+            >
+              <MoreHorizontal size={12} />
+            </button>
+          </div>
+        )}
+
+        {isMenuOpen && (
+          <div
+            className="absolute right-0 top-full mt-0.5 w-40 rounded-xl shadow-2xl z-50 overflow-hidden"
+            style={{ background: "var(--card)", border: "1px solid var(--border-hi)" }}
+            onClick={e => e.stopPropagation()}
+          >
+            <button onClick={() => onStartRename(folder)}
+                    className="w-full flex items-center gap-2.5 px-3 py-2.5 text-xs transition-colors hover:bg-white/[0.05] text-left">
+              <Pencil size={11} style={{ color: "var(--blue)" }} />
+              <span style={{ color: "var(--text-2)" }}>Renomear</span>
+            </button>
+            <div style={{ height: "1px", background: "var(--border)", margin: "2px 0" }} />
+            <button onClick={() => { onDelete(folder.id); setOpenMenu(null); }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2.5 text-xs transition-colors hover:bg-red-500/10 text-left">
+              <Trash2 size={11} className="text-red-400" />
+              <span className="text-red-400">Excluir pasta</span>
+            </button>
+          </div>
+        )}
+      </div>
+
+      {expanded && (
+        <div className="ml-1 border-l pl-1 mb-1" style={{ borderColor: "var(--border)" }}>
+          {chatsInside.length === 0 ? (
+            <p className="text-xs px-3 py-1.5" style={{ color: "var(--text-3)", fontSize: "11px" }}>Vazia</p>
+          ) : (
+            chatsInside.map(chat => (
+              <ChatRow key={chat.id} chat={chat} indent {...chatRowProps} />
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Sidebar ───────────────────────────────────────────────────────────────────
 
 export function Sidebar() {
-  const pathname  = usePathname();
-  const router    = useRouter();
-  const supabase  = createClient();
+  const pathname = usePathname();
+  const router   = useRouter();
+  const supabase = createClient();
 
-  const [chats, setChats]       = useState<ChatWithFolder[]>([]);
-  const [folders, setFolders]   = useState<FolderItem[]>([]);
-  const [profile, setProfile]   = useState<{ nome: string; plano: string } | null>(null);
+  const [chats, setChats]     = useState<Chat[]>([]);
+  const [folders, setFolders] = useState<FolderItem[]>([]);
+  const [profile, setProfile] = useState<{ nome: string; plano: string } | null>(null);
+  const [open, setOpen]       = useState(false); // mobile drawer
 
-  // UI state
-  const [openMenu, setOpenMenu]           = useState<string | null>(null);   // chatId ou folderId com menu aberto
-  const [renamingChat, setRenamingChat]   = useState<string | null>(null);
+  const [openMenu, setOpenMenu]             = useState<string | null>(null);
+  const [renamingChat, setRenamingChat]     = useState<string | null>(null);
   const [renamingFolder, setRenamingFolder] = useState<string | null>(null);
-  const [renameValue, setRenameValue]     = useState("");
+  const [renameValue, setRenameValue]       = useState("");
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
-  const [movingChat, setMovingChat]       = useState<string | null>(null);    // chatId sendo movido
+  const [movingChat, setMovingChat]         = useState<string | null>(null);
   const [creatingFolder, setCreatingFolder] = useState(false);
-  const [newFolderName, setNewFolderName] = useState("");
+  const [newFolderName, setNewFolderName]   = useState("");
 
   const renameRef = useRef<HTMLInputElement>(null);
 
@@ -58,16 +323,22 @@ export function Sidebar() {
       supabase.from("chats").select("*").eq("user_id", user.id).order("atualizado_em", { ascending: false }).limit(40),
       supabase.from("folders").select("*").eq("user_id", user.id).order("created_at", { ascending: true }),
     ]);
-    if (prof)        setProfile(prof);
-    if (chatList)    setChats(chatList);
-    if (folderList)  setFolders(folderList);
-  }, []);
+    if (prof)       setProfile(prof);
+    if (chatList)   setChats(chatList);
+    if (folderList) setFolders(folderList);
+  }, [supabase]);
 
   useEffect(() => { load(); }, [pathname]);
 
-  // Fecha menu ao clicar fora
+  // Close mobile drawer on navigation
+  useEffect(() => { setOpen(false); }, [pathname]);
+
+  // Close menus on outside click
   useEffect(() => {
-    const handler = () => setOpenMenu(null);
+    const handler = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest("[data-menu]")) setOpenMenu(null);
+    };
     document.addEventListener("click", handler);
     return () => document.removeEventListener("click", handler);
   }, []);
@@ -79,7 +350,7 @@ export function Sidebar() {
     }
   }, [renamingChat, renamingFolder]);
 
-  // ── Actions ──────────────────────────────────────────────────────────────
+  // ── Actions ───────────────────────────────────────────────────────────────
 
   const handleNovoChat = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -114,7 +385,6 @@ export function Sidebar() {
   };
 
   const deleteFolder = async (id: string) => {
-    // Chats voltam para sem pasta
     await supabase.from("chats").update({ folder_id: null }).eq("folder_id", id);
     await supabase.from("folders").delete().eq("id", id);
     setFolders(prev => prev.filter(f => f.id !== id));
@@ -140,8 +410,6 @@ export function Sidebar() {
     setNewFolderName("");
   };
 
-  // ── Helpers ───────────────────────────────────────────────────────────────
-
   const toggleFolder = (id: string) =>
     setExpandedFolders(prev => {
       const n = new Set(prev);
@@ -149,7 +417,7 @@ export function Sidebar() {
       return n;
     });
 
-  const startRenameChat = (chat: ChatWithFolder) => {
+  const startRenameChat = (chat: Chat) => {
     setRenamingChat(chat.id);
     setRenameValue(chat.titulo);
     setOpenMenu(null);
@@ -161,224 +429,24 @@ export function Sidebar() {
     setOpenMenu(null);
   };
 
-  // ── Render helpers ────────────────────────────────────────────────────────
+  // ── Derived ───────────────────────────────────────────────────────────────
 
   const ungrouped = chats.filter(c => !c.folder_id);
-  const inFolder  = (folderId: string) => chats.filter(c => c.folder_id === folderId);
 
-  const ChatRow = ({ chat, indent = false }: { chat: ChatWithFolder; indent?: boolean }) => {
-    const isActive  = pathname === `/chat/${chat.id}`;
-    const meta      = TIPO_META[chat.tipo_ultimo ?? ""];
-    const color     = meta?.color ?? "var(--text-3)";
-    const Icon      = meta?.Icon ?? MessageSquare;
-    const isRenaming = renamingChat === chat.id;
-    const isMenuOpen = openMenu === chat.id;
-    const isMoving   = movingChat === chat.id;
-
-    return (
-      <div className="relative group/row">
-        {/* Moving overlay */}
-        {isMoving && (
-          <div className="absolute inset-0 z-20 rounded-lg overflow-visible">
-            <div className="absolute left-full ml-1 top-0 w-44 rounded-xl overflow-hidden shadow-2xl z-30"
-                 style={{ background: "var(--card)", border: "1px solid var(--border-hi)" }}>
-              <p className="text-xs px-3 py-2 font-semibold" style={{ color: "var(--text-3)", borderBottom: "1px solid var(--border)" }}>
-                Mover para
-              </p>
-              <button onClick={() => moveChatToFolder(chat.id, null)}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-xs transition-colors hover:bg-white/[0.04] text-left"
-                      style={{ color: "var(--text-2)" }}>
-                <MessageSquare size={11} /> Sem pasta
-              </button>
-              {folders.map(f => (
-                <button key={f.id} onClick={() => moveChatToFolder(chat.id, f.id)}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-xs transition-colors hover:bg-white/[0.04] text-left"
-                        style={{ color: "var(--text-2)" }}>
-                  <Folder size={11} style={{ color: "var(--mint)" }} /> {f.nome}
-                </button>
-              ))}
-              <button onClick={() => setMovingChat(null)}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-xs transition-colors hover:bg-white/[0.04] text-left"
-                      style={{ color: "var(--text-3)", borderTop: "1px solid var(--border)" }}>
-                <X size={11} /> Cancelar
-              </button>
-            </div>
-          </div>
-        )}
-
-        <div className={cn(
-          "relative flex items-center gap-2 rounded-lg text-xs transition-all duration-150 group/chat",
-          indent ? "ml-3" : "",
-          isActive ? "" : "hover:bg-white/[0.03]",
-        )}
-             style={{
-               color: isActive ? "var(--text)" : "var(--text-2)",
-               background: isActive ? `${color}0D` : undefined,
-             }}>
-
-          {/* Active bar */}
-          <div className={cn(
-            "absolute left-0 top-1/2 -translate-y-1/2 w-0.5 rounded-r-full transition-all duration-300",
-            isActive ? "h-5 opacity-100" : "h-3 opacity-0 group-hover/chat:opacity-40"
-          )} style={{ background: color }} />
-
-          {isRenaming ? (
-            <div className="flex items-center gap-1 flex-1 px-2 py-1.5 ml-1">
-              <input
-                ref={renameRef}
-                value={renameValue}
-                onChange={e => setRenameValue(e.target.value)}
-                onKeyDown={e => { if (e.key === "Enter") confirmRenameChat(); if (e.key === "Escape") setRenamingChat(null); }}
-                className="flex-1 text-xs rounded px-1.5 py-0.5 outline-none min-w-0"
-                style={{ background: "var(--border)", color: "var(--text)", border: "1px solid var(--mint-dim)" }}
-              />
-              <button onClick={confirmRenameChat} className="p-0.5 rounded transition-colors hover:text-white" style={{ color: "var(--mint)" }}>
-                <Check size={12} />
-              </button>
-              <button onClick={() => setRenamingChat(null)} className="p-0.5 rounded transition-colors hover:text-white" style={{ color: "var(--text-3)" }}>
-                <X size={12} />
-              </button>
-            </div>
-          ) : (
-            <>
-              <Link href={`/chat/${chat.id}`} className="flex items-center gap-2 flex-1 px-2.5 py-2 ml-0.5 min-w-0">
-                <Icon size={11} className="flex-shrink-0" style={{ color: isActive ? color : "var(--text-3)" }} strokeWidth={1.5} />
-                <span className="truncate">{chat.titulo}</span>
-              </Link>
-
-              {/* Actions on hover */}
-              <div className={cn(
-                "flex items-center gap-0.5 pr-1.5 flex-shrink-0 transition-opacity duration-150",
-                isMenuOpen ? "opacity-100" : "opacity-0 group-hover/row:opacity-100"
-              )}>
-                <button
-                  onClick={e => { e.stopPropagation(); setOpenMenu(isMenuOpen ? null : chat.id); }}
-                  className="p-1 rounded transition-colors hover:bg-white/10"
-                  style={{ color: "var(--text-3)" }}>
-                  <MoreHorizontal size={12} />
-                </button>
-              </div>
-
-              {/* Dropdown menu */}
-              {isMenuOpen && (
-                <div className="absolute right-0 top-full mt-0.5 w-44 rounded-xl shadow-2xl z-50 overflow-hidden"
-                     style={{ background: "var(--card)", border: "1px solid var(--border-hi)" }}
-                     onClick={e => e.stopPropagation()}>
-                  <button onClick={() => startRenameChat(chat)}
-                          className="w-full flex items-center gap-2.5 px-3 py-2.5 text-xs transition-colors hover:bg-white/[0.05] text-left">
-                    <Pencil size={11} style={{ color: "var(--blue)" }} />
-                    <span style={{ color: "var(--text-2)" }}>Renomear</span>
-                  </button>
-                  <button onClick={() => { setMovingChat(chat.id); setOpenMenu(null); }}
-                          className="w-full flex items-center gap-2.5 px-3 py-2.5 text-xs transition-colors hover:bg-white/[0.05] text-left">
-                    <FolderPlus size={11} style={{ color: "var(--mint)" }} />
-                    <span style={{ color: "var(--text-2)" }}>Mover para pasta</span>
-                  </button>
-                  <div style={{ height: "1px", background: "var(--border)", margin: "2px 0" }} />
-                  <button onClick={() => { deleteChat(chat.id); setOpenMenu(null); }}
-                          className="w-full flex items-center gap-2.5 px-3 py-2.5 text-xs transition-colors hover:bg-red-500/10 text-left">
-                    <Trash2 size={11} className="text-red-400" />
-                    <span className="text-red-400">Excluir</span>
-                  </button>
-                </div>
-              )}
-            </>
-          )}
-        </div>
-      </div>
-    );
+  const sharedChatRowProps: Omit<ChatRowProps, "chat" | "indent"> = {
+    pathname, openMenu, renamingChat, renameValue, movingChat, folders, renameRef,
+    setOpenMenu, setRenameValue, setMovingChat,
+    onRenameConfirm: confirmRenameChat,
+    onRenameCancel: () => setRenamingChat(null),
+    onStartRename: startRenameChat,
+    onDelete: deleteChat,
+    onMoveToFolder: moveChatToFolder,
   };
 
-  const FolderRow = ({ folder }: { folder: FolderItem }) => {
-    const expanded     = expandedFolders.has(folder.id);
-    const chatsInside  = inFolder(folder.id);
-    const isRenaming   = renamingFolder === folder.id;
-    const isMenuOpen   = openMenu === `folder-${folder.id}`;
+  // ── Inner panel (shared between desktop aside and mobile drawer) ──────────
 
-    return (
-      <div>
-        <div className="relative group/folder flex items-center gap-1 rounded-lg transition-all duration-150 hover:bg-white/[0.03]">
-          <button onClick={() => toggleFolder(folder.id)}
-                  className="flex items-center gap-1.5 flex-1 px-2 py-1.5 text-xs min-w-0">
-            <ChevronRight size={11} className="flex-shrink-0 transition-transform duration-200"
-                         style={{ color: "var(--text-3)", transform: expanded ? "rotate(90deg)" : "rotate(0deg)" }} />
-            {expanded
-              ? <FolderOpen size={12} style={{ color: "var(--mint)" }} className="flex-shrink-0" strokeWidth={1.5} />
-              : <Folder     size={12} style={{ color: "var(--mint)" }} className="flex-shrink-0" strokeWidth={1.5} />
-            }
-            {isRenaming ? (
-              <input
-                ref={renameRef}
-                value={renameValue}
-                onChange={e => setRenameValue(e.target.value)}
-                onKeyDown={e => { if (e.key === "Enter") confirmRenameFolder(); if (e.key === "Escape") setRenamingFolder(null); }}
-                onClick={e => e.stopPropagation()}
-                className="flex-1 text-xs rounded px-1 py-0.5 outline-none min-w-0"
-                style={{ background: "var(--border)", color: "var(--text)", border: "1px solid var(--mint-dim)" }}
-              />
-            ) : (
-              <span className="truncate font-medium text-xs" style={{ color: "var(--text-2)" }}>
-                {folder.nome}
-              </span>
-            )}
-            {!isRenaming && (
-              <span className="ml-auto text-xs flex-shrink-0 mr-1" style={{ color: "var(--text-3)", fontSize: "10px" }}>
-                {chatsInside.length > 0 ? chatsInside.length : ""}
-              </span>
-            )}
-          </button>
-
-          {/* Folder actions */}
-          {!isRenaming && (
-            <div className={cn(
-              "flex items-center pr-1 flex-shrink-0 transition-opacity duration-150",
-              isMenuOpen ? "opacity-100" : "opacity-0 group-hover/folder:opacity-100"
-            )}>
-              <button onClick={e => { e.stopPropagation(); setOpenMenu(isMenuOpen ? null : `folder-${folder.id}`); }}
-                      className="p-1 rounded transition-colors hover:bg-white/10"
-                      style={{ color: "var(--text-3)" }}>
-                <MoreHorizontal size={12} />
-              </button>
-            </div>
-          )}
-
-          {isMenuOpen && (
-            <div className="absolute right-0 top-full mt-0.5 w-40 rounded-xl shadow-2xl z-50 overflow-hidden"
-                 style={{ background: "var(--card)", border: "1px solid var(--border-hi)" }}
-                 onClick={e => e.stopPropagation()}>
-              <button onClick={() => startRenameFolder(folder)}
-                      className="w-full flex items-center gap-2.5 px-3 py-2.5 text-xs transition-colors hover:bg-white/[0.05] text-left">
-                <Pencil size={11} style={{ color: "var(--blue)" }} />
-                <span style={{ color: "var(--text-2)" }}>Renomear</span>
-              </button>
-              <div style={{ height: "1px", background: "var(--border)", margin: "2px 0" }} />
-              <button onClick={() => { deleteFolder(folder.id); setOpenMenu(null); }}
-                      className="w-full flex items-center gap-2.5 px-3 py-2.5 text-xs transition-colors hover:bg-red-500/10 text-left">
-                <Trash2 size={11} className="text-red-400" />
-                <span className="text-red-400">Excluir pasta</span>
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* Chats inside folder */}
-        {expanded && (
-          <div className="ml-1 border-l pl-1 mb-1" style={{ borderColor: "var(--border)" }}>
-            {chatsInside.length === 0 ? (
-              <p className="text-xs px-3 py-1.5" style={{ color: "var(--text-3)", fontSize: "11px" }}>Vazia</p>
-            ) : (
-              chatsInside.map(chat => <ChatRow key={chat.id} chat={chat} indent />)
-            )}
-          </div>
-        )}
-      </div>
-    );
-  };
-
-  return (
-    <aside className="w-60 flex flex-col h-screen flex-shrink-0"
-           style={{ background: "var(--surface)", borderRight: "1px solid var(--border)" }}>
-
+  const sidebarContent = (
+    <>
       {/* Logo */}
       <div className="px-4 py-5" style={{ borderBottom: "1px solid var(--border)" }}>
         <Link href="/dashboard" className="flex items-center gap-2.5">
@@ -398,8 +466,7 @@ export function Sidebar() {
             <Zap size={10} style={{ color: "var(--amber)" }} />
             <span className="text-xs font-semibold" style={{ color: "var(--amber)" }}>Plano Gratuito</span>
           </div>
-          <Link href="/configuracoes" className="text-xs transition-colors duration-200 hover:text-white"
-                style={{ color: "var(--text-3)" }}>
+          <Link href="/configuracoes" className="text-xs transition-colors hover:text-white" style={{ color: "var(--text-3)" }}>
             Upgrade Pro · R$49/mês →
           </Link>
         </div>
@@ -425,12 +492,31 @@ export function Sidebar() {
       </div>
 
       {/* Chat + Folder list */}
-      <div className="flex-1 overflow-y-auto px-2 pb-2" onClick={() => setOpenMenu(null)}>
+      <div className="flex-1 overflow-y-auto px-2 pb-2">
 
         {/* Folders */}
         {folders.length > 0 && (
           <div className="mb-2">
-            {folders.map(folder => <FolderRow key={folder.id} folder={folder} />)}
+            {folders.map(folder => (
+              <FolderRow
+                key={folder.id}
+                folder={folder}
+                chatsInside={chats.filter(c => c.folder_id === folder.id)}
+                expanded={expandedFolders.has(folder.id)}
+                openMenu={openMenu}
+                renamingFolder={renamingFolder}
+                renameValue={renameValue}
+                renameRef={renameRef}
+                chatRowProps={sharedChatRowProps}
+                setOpenMenu={setOpenMenu}
+                setRenameValue={setRenameValue}
+                onToggle={toggleFolder}
+                onRenameConfirm={confirmRenameFolder}
+                onRenameCancel={() => setRenamingFolder(null)}
+                onStartRename={startRenameFolder}
+                onDelete={deleteFolder}
+              />
+            ))}
           </div>
         )}
 
@@ -448,31 +534,32 @@ export function Sidebar() {
               className="flex-1 text-xs outline-none bg-transparent"
               style={{ color: "var(--text)" }}
             />
-            <button onClick={createFolder} className="p-0.5" style={{ color: "var(--mint)" }}>
-              <Check size={12} />
-            </button>
-            <button onClick={() => { setCreatingFolder(false); setNewFolderName(""); }} style={{ color: "var(--text-3)" }}>
-              <X size={12} />
-            </button>
+            <button onClick={createFolder} className="p-0.5" style={{ color: "var(--mint)" }}><Check size={12} /></button>
+            <button onClick={() => { setCreatingFolder(false); setNewFolderName(""); }} style={{ color: "var(--text-3)" }}><X size={12} /></button>
           </div>
         )}
 
-        {/* Ungrouped chats */}
+        {/* Section label + new folder button */}
         {(chats.length > 0 || folders.length > 0) && (
           <div className="flex items-center justify-between px-2 mb-1 mt-1">
             <p style={{ color: "var(--text-3)", fontSize: "10px" }} className="font-semibold uppercase tracking-widest">
               {folders.length > 0 ? "Sem pasta" : "Recentes"}
             </p>
-            <button onClick={() => { setCreatingFolder(true); setNewFolderName(""); }}
-                    className="flex items-center gap-1 transition-colors hover:text-white"
-                    style={{ color: "var(--text-3)", fontSize: "10px" }}
-                    title="Nova pasta">
+            <button
+              onClick={() => { setCreatingFolder(true); setNewFolderName(""); }}
+              className="flex items-center gap-1 transition-colors hover:text-white"
+              style={{ color: "var(--text-3)", fontSize: "10px" }}
+              title="Nova pasta"
+            >
               <FolderPlus size={11} />
             </button>
           </div>
         )}
 
-        {ungrouped.map(chat => <ChatRow key={chat.id} chat={chat} />)}
+        {/* Ungrouped chats */}
+        {ungrouped.map(chat => (
+          <ChatRow key={chat.id} chat={chat} {...sharedChatRowProps} />
+        ))}
       </div>
 
       {/* Footer */}
@@ -483,14 +570,12 @@ export function Sidebar() {
           <Settings size={13} />
           Configurações
         </Link>
-
         <button onClick={handleSignOut}
                 className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs transition-all duration-200 hover:text-red-400"
                 style={{ color: "var(--text-3)" }}>
           <LogOut size={13} />
           Sair
         </button>
-
         {profile && (
           <div className="flex items-center gap-2.5 px-2 pt-3 mt-1" style={{ borderTop: "1px solid var(--border)" }}>
             <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
@@ -504,6 +589,47 @@ export function Sidebar() {
           </div>
         )}
       </div>
-    </aside>
+    </>
+  );
+
+  return (
+    <>
+      {/* ── Mobile hamburger button ── */}
+      <button
+        className="md:hidden fixed top-3 left-3 z-50 p-2 rounded-xl transition-colors hover:bg-white/[0.06]"
+        style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
+        onClick={() => setOpen(true)}
+        aria-label="Abrir menu"
+      >
+        <Menu size={18} style={{ color: "var(--text-2)" }} />
+      </button>
+
+      {/* ── Mobile overlay ── */}
+      {open && (
+        <div
+          className="md:hidden fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
+          onClick={() => setOpen(false)}
+        />
+      )}
+
+      {/* ── Mobile drawer ── */}
+      <aside
+        className={cn(
+          "md:hidden fixed inset-y-0 left-0 z-50 w-72 flex flex-col h-screen transition-transform duration-300",
+          open ? "translate-x-0" : "-translate-x-full"
+        )}
+        style={{ background: "var(--surface)", borderRight: "1px solid var(--border)" }}
+      >
+        {sidebarContent}
+      </aside>
+
+      {/* ── Desktop sidebar ── */}
+      <aside
+        className="hidden md:flex w-60 flex-col h-screen flex-shrink-0"
+        style={{ background: "var(--surface)", borderRight: "1px solid var(--border)" }}
+      >
+        {sidebarContent}
+      </aside>
+    </>
   );
 }
