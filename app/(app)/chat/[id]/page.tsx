@@ -20,17 +20,21 @@ export default async function ChatPage({ params }: { params: { id: string } }) {
 
   if (!chat) redirect("/dashboard");
 
-  // Busca mensagens salvas
-  const { data: rows } = await supabase
+  // Busca mensagens salvas — ordena por id (sempre existe) como fallback seguro
+  const { data: rows, error: msgError } = await supabase
     .from("messages")
-    .select("role, content, arquivo_tipo")
+    .select("id, role, content, arquivo_tipo")
     .eq("chat_id", chatId)
-    .order("created_at", { ascending: true });
+    .order("id", { ascending: true });
+
+  if (msgError) {
+    console.error("[ChatPage] erro ao carregar mensagens:", msgError.message);
+  }
 
   const dbMessages: ChatMessage[] = (rows ?? []).map((r) => ({
     role: r.role as "user" | "assistant",
     content: r.content,
-    fileResult: null, // conteúdo completo não é re-hidratado; FilePreview re-gera se necessário
+    fileResult: null,
   }));
 
   return <ChatClient chatId={chatId} dbMessages={dbMessages} />;
