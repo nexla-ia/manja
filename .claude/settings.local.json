@@ -1,7 +1,13 @@
 {
   "permissions": {
     "allow": [
-      "Bash(ls /c/manja-ai/.env*)"
+      "Bash(ls /c/manja-ai/.env*)",
+      "Bash(git rm:*)",
+      "Bash(git -C /c/manja-ai status --short)",
+      "Bash(git -C /c/manja-ai add app/\\\\\\(auth\\\\\\)/cadastro/page.tsx)",
+      "Bash(git -C /c/manja-ai commit -m ':*)",
+      "Bash(git -C /c/manja-ai push)",
+      "Bash(git -C /c/manja-ai log --oneline -5)"
     ]
   }
 }

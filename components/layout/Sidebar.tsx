@@ -8,7 +8,7 @@ import { Chat } from "@/types/database";
 import { cn } from "@/lib/utils/cn";
 import {
   MessageSquare, Plus, History, Settings,
-  LogOut, Zap, BookOpen,
+  LogOut, Zap, Sparkles,
 } from "lucide-react";
 
 const TIPO_ICONS: Record<string, string> = {
@@ -63,47 +63,51 @@ export function Sidebar() {
   };
 
   return (
-    <aside className="w-64 bg-[#0d1410] border-r border-[#1e2e20] flex flex-col h-screen flex-shrink-0">
+    <aside className="w-64 flex flex-col h-screen flex-shrink-0" style={{ background: "#0F0F17", borderRight: "1px solid #1E1E2E" }}>
       {/* Logo */}
-      <div className="p-5 border-b border-[#1e2e20]">
-        <Link href="/dashboard" className="flex items-center gap-2">
-          <BookOpen size={20} className="text-green-500" />
-          <span className="text-white font-bold text-lg">
-            <span className="text-green-500">Manja</span>.ai
+      <div className="p-5" style={{ borderBottom: "1px solid #1E1E2E" }}>
+        <Link href="/dashboard" className="flex items-center gap-2.5 group">
+          <div className="w-8 h-8 rounded-xl flex items-center justify-center animate-glow"
+               style={{ background: "linear-gradient(135deg, #6EE7B7, #3B82F6)" }}>
+            <Sparkles size={15} className="text-white" />
+          </div>
+          <span className="font-syne font-bold text-xl gradient-text">
+            Manja.ai
           </span>
         </Link>
       </div>
 
-      {/* Plano */}
+      {/* Badge do plano */}
       {profile?.plano === "free" && (
-        <div className="mx-3 mt-3 bg-green-500/10 border border-green-500/20 rounded-xl p-3">
+        <div className="mx-3 mt-3 rounded-xl p-3" style={{ background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.25)" }}>
           <div className="flex items-center gap-2 mb-1">
-            <Zap size={13} className="text-green-400" />
-            <span className="text-green-400 text-xs font-semibold">Plano Gratuito</span>
+            <Zap size={13} style={{ color: "#F59E0B" }} />
+            <span className="text-xs font-semibold" style={{ color: "#F59E0B" }}>Plano Gratuito</span>
           </div>
-          <Link
-            href="/configuracoes"
-            className="text-xs text-gray-400 hover:text-green-400 transition"
-          >
+          <Link href="/configuracoes" className="text-xs transition" style={{ color: "#64748B" }}
+                onMouseEnter={e => (e.currentTarget.style.color = "#F59E0B")}
+                onMouseLeave={e => (e.currentTarget.style.color = "#64748B")}>
             Upgrade para Pro → R$49/mês
           </Link>
         </div>
       )}
 
       {profile?.plano === "pro" && (
-        <div className="mx-3 mt-3 bg-green-600/10 border border-green-600/20 rounded-xl p-3">
+        <div className="mx-3 mt-3 rounded-xl p-3 animate-glow"
+             style={{ background: "linear-gradient(135deg, rgba(110,231,183,0.08), rgba(59,130,246,0.08))", border: "1px solid rgba(110,231,183,0.2)" }}>
           <div className="flex items-center gap-2">
-            <Zap size={13} className="text-green-400" />
-            <span className="text-green-400 text-xs font-semibold">Plano Pro ativo ✓</span>
+            <Sparkles size={13} style={{ color: "#6EE7B7" }} />
+            <span className="text-xs font-semibold gradient-text">Plano Pro ativo ✓</span>
           </div>
         </div>
       )}
 
-      {/* Novo chat */}
+      {/* Botão Novo chat */}
       <div className="p-3">
         <button
           onClick={handleNovoChat}
-          className="w-full flex items-center gap-2 bg-green-600 hover:bg-green-500 text-white rounded-xl px-3 py-2.5 text-sm font-semibold transition"
+          className="btn-shimmer w-full flex items-center gap-2 text-white rounded-xl px-3 py-2.5 text-sm font-semibold transition-all group"
+          style={{ boxShadow: "0 4px 15px rgba(110,231,183,0.2)" }}
         >
           <Plus size={16} />
           Novo chat
@@ -114,60 +118,76 @@ export function Sidebar() {
       <div className="flex-1 overflow-y-auto px-2 pb-2">
         {chats.length > 0 && (
           <div className="mb-2">
-            <p className="text-gray-600 text-xs font-semibold px-2 mb-1 uppercase tracking-wider">
+            <p className="text-xs font-semibold px-2 mb-2 uppercase tracking-wider" style={{ color: "#64748B" }}>
               Recentes
             </p>
-            {chats.map((chat) => (
-              <Link
-                key={chat.id}
-                href={`/chat/${chat.id}`}
-                className={cn(
-                  "flex items-center gap-2 px-2 py-2 rounded-lg text-sm transition group",
-                  pathname === `/chat/${chat.id}`
-                    ? "bg-green-600/15 text-white"
-                    : "text-gray-400 hover:text-white hover:bg-[#111a13]"
-                )}
-              >
-                <span className="text-base flex-shrink-0">
-                  {chat.tipo_ultimo ? TIPO_ICONS[chat.tipo_ultimo] : "💬"}
-                </span>
-                <span className="truncate">{chat.titulo}</span>
-              </Link>
-            ))}
+            {chats.map((chat) => {
+              const isActive = pathname === `/chat/${chat.id}`;
+              return (
+                <Link
+                  key={chat.id}
+                  href={`/chat/${chat.id}`}
+                  className={cn(
+                    "relative flex items-center gap-2 px-2 py-2 rounded-lg text-sm transition-all group overflow-hidden",
+                    isActive ? "text-white" : "text-[#64748B] hover:text-white"
+                  )}
+                  style={isActive ? { background: "rgba(110,231,183,0.08)" } : {}}
+                  onMouseEnter={e => { if (!isActive) (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.03)"; }}
+                  onMouseLeave={e => { if (!isActive) (e.currentTarget as HTMLElement).style.background = ""; }}
+                >
+                  {/* Indicador colorido esquerdo no hover/ativo */}
+                  <div className={cn(
+                    "absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 rounded-r-full transition-all",
+                    isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                  )}
+                  style={{ background: "linear-gradient(180deg, #6EE7B7, #3B82F6)" }} />
+
+                  <span className="text-base flex-shrink-0 ml-1">
+                    {chat.tipo_ultimo ? TIPO_ICONS[chat.tipo_ultimo] : "💬"}
+                  </span>
+                  <span className="truncate">{chat.titulo}</span>
+                </Link>
+              );
+            })}
           </div>
         )}
       </div>
 
       {/* Footer */}
-      <div className="border-t border-[#1e2e20] p-3 space-y-1">
-        <Link
-          href="/historico"
-          className="flex items-center gap-2 px-2 py-2 rounded-lg text-gray-400 hover:text-white hover:bg-[#111a13] text-sm transition"
-        >
+      <div className="p-3 space-y-1" style={{ borderTop: "1px solid #1E1E2E" }}>
+        <Link href="/historico"
+          className="flex items-center gap-2 px-2 py-2 rounded-lg text-sm transition-all"
+          style={{ color: "#64748B" }}
+          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = "#F1F5F9"; (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.04)"; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = "#64748B"; (e.currentTarget as HTMLElement).style.background = ""; }}>
           <History size={15} />
           Histórico completo
         </Link>
-        <Link
-          href="/configuracoes"
-          className="flex items-center gap-2 px-2 py-2 rounded-lg text-gray-400 hover:text-white hover:bg-[#111a13] text-sm transition"
-        >
+        <Link href="/configuracoes"
+          className="flex items-center gap-2 px-2 py-2 rounded-lg text-sm transition-all"
+          style={{ color: "#64748B" }}
+          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = "#F1F5F9"; (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.04)"; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = "#64748B"; (e.currentTarget as HTMLElement).style.background = ""; }}>
           <Settings size={15} />
           Configurações
         </Link>
         <button
           onClick={handleSignOut}
-          className="w-full flex items-center gap-2 px-2 py-2 rounded-lg text-gray-400 hover:text-red-400 hover:bg-[#111a13] text-sm transition"
-        >
+          className="w-full flex items-center gap-2 px-2 py-2 rounded-lg text-sm transition-all"
+          style={{ color: "#64748B" }}
+          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = "#EF4444"; (e.currentTarget as HTMLElement).style.background = "rgba(239,68,68,0.06)"; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = "#64748B"; (e.currentTarget as HTMLElement).style.background = ""; }}>
           <LogOut size={15} />
           Sair
         </button>
 
         {profile && (
-          <div className="flex items-center gap-2 px-2 pt-2 mt-1 border-t border-[#1e2e20]">
-            <div className="w-7 h-7 rounded-full bg-green-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+          <div className="flex items-center gap-2 px-2 pt-2 mt-1" style={{ borderTop: "1px solid #1E1E2E" }}>
+            <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
+                 style={{ background: "linear-gradient(135deg, #6EE7B7, #3B82F6)" }}>
               {profile.nome?.[0]?.toUpperCase() ?? "U"}
             </div>
-            <span className="text-gray-300 text-xs truncate">{profile.nome ?? "Estudante"}</span>
+            <span className="text-xs truncate" style={{ color: "#94A3B8" }}>{profile.nome ?? "Estudante"}</span>
           </div>
         )}
       </div>

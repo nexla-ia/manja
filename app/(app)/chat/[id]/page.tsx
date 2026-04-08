@@ -7,7 +7,7 @@ import { useChat } from "@/hooks/useChat";
 import { MessageBubble } from "@/components/chat/MessageBubble";
 import { ChatInput } from "@/components/chat/ChatInput";
 import { TypingIndicator } from "@/components/chat/TypingIndicator";
-import { BookOpen, Zap } from "lucide-react";
+import { Sparkles, Zap } from "lucide-react";
 import Link from "next/link";
 
 const SUGESTOES = [
@@ -58,20 +58,27 @@ export default function ChatPage() {
   return (
     <div className="flex flex-col h-screen">
       {/* Header */}
-      <div className="flex items-center gap-3 px-6 py-4 border-b border-[#1e2e20]">
-        <div className="w-8 h-8 rounded-lg bg-green-600/20 border border-green-600/30 flex items-center justify-center">
-          <BookOpen size={15} className="text-green-400" />
+      <div className="flex items-center gap-3 px-6 py-4 sticky top-0 z-10"
+           style={{
+             borderBottom: "1px solid #1E1E2E",
+             background: "rgba(10,10,15,0.8)",
+             backdropFilter: "blur(12px)",
+           }}>
+        <div className="w-9 h-9 rounded-xl flex items-center justify-center"
+             style={{ background: "linear-gradient(135deg, #6EE7B7, #3B82F6)", boxShadow: "0 4px 15px rgba(110,231,183,0.25)" }}>
+          <Sparkles size={16} className="text-white" />
         </div>
         <div>
-          <p className="text-white font-semibold text-sm">Manja Agent</p>
+          <p className="font-semibold text-sm font-syne" style={{ color: "#F1F5F9" }}>Manja Agent</p>
           <div className="flex items-center gap-1.5">
-            <div className="w-1.5 h-1.5 rounded-full bg-green-500" style={{ animation: "pulse 2s infinite" }} />
-            <span className="text-gray-500 text-xs">Online · Claude Sonnet 4.6</span>
+            <div className="w-1.5 h-1.5 rounded-full" style={{ background: "#6EE7B7", animation: "pulse 2s infinite" }} />
+            <span className="text-xs" style={{ color: "#64748B" }}>Online · Claude Sonnet 4.6</span>
           </div>
         </div>
         <div className="ml-auto flex gap-2">
           {["📄 Trabalho", "🎯 Slides", "📋 Prova", "📜 Edital"].map((tag) => (
-            <span key={tag} className="hidden md:block bg-[#111a13] border border-[#1e2e20] rounded-full px-2.5 py-1 text-gray-500 text-xs">
+            <span key={tag} className="hidden md:block rounded-full px-2.5 py-1 text-xs"
+                  style={{ background: "#14141E", border: "1px solid #1E1E2E", color: "#64748B" }}>
               {tag}
             </span>
           ))}
@@ -91,21 +98,38 @@ export default function ChatPage() {
               <button
                 key={i}
                 onClick={() => handleSugestao(s.text)}
-                className="flex items-start gap-2 bg-[#111a13] border border-[#1e2e20] hover:border-green-700 rounded-xl p-3 text-left text-xs text-gray-400 hover:text-white transition group"
+                className="card-gradient-border flex items-start gap-3 rounded-xl p-3.5 text-left text-xs transition-all group animate-slide-up"
+                style={{
+                  background: "#14141E",
+                  border: "1px solid #1E1E2E",
+                  color: "#64748B",
+                  animationDelay: `${i * 60}ms`,
+                }}
+                onMouseEnter={e => {
+                  (e.currentTarget as HTMLElement).style.color = "#F1F5F9";
+                  (e.currentTarget as HTMLElement).style.transform = "translateY(-2px)";
+                  (e.currentTarget as HTMLElement).style.boxShadow = "0 8px 25px rgba(0,0,0,0.3)";
+                }}
+                onMouseLeave={e => {
+                  (e.currentTarget as HTMLElement).style.color = "#64748B";
+                  (e.currentTarget as HTMLElement).style.transform = "";
+                  (e.currentTarget as HTMLElement).style.boxShadow = "";
+                }}
               >
-                <span className="text-base flex-shrink-0">{s.icon}</span>
-                <span className="leading-relaxed">{s.text}</span>
+                <span className="text-xl flex-shrink-0">{s.icon}</span>
+                <span className="leading-relaxed pt-0.5">{s.text}</span>
               </button>
             ))}
           </div>
         )}
 
         {loading && (
-          <div className="flex items-center gap-2 animate-fade-in">
-            <div className="w-7 h-7 rounded-lg bg-green-600/20 border border-green-600/30 flex items-center justify-center">
-              <BookOpen size={13} className="text-green-400" />
+          <div className="flex items-center gap-2 animate-slide-up">
+            <div className="w-7 h-7 rounded-lg flex items-center justify-center"
+                 style={{ background: "linear-gradient(135deg, #6EE7B7, #3B82F6)" }}>
+              <Sparkles size={13} className="text-white" />
             </div>
-            <div className="bg-[#111a13] border border-[#1e2e20] rounded-2xl rounded-tl-sm">
+            <div className="rounded-2xl rounded-tl-sm" style={{ background: "#14141E", border: "1px solid #1E1E2E" }}>
               <TypingIndicator />
             </div>
           </div>
@@ -113,13 +137,14 @@ export default function ChatPage() {
 
         {/* Banner limite */}
         {planeLimitado && (
-          <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4 flex items-center gap-3">
-            <Zap size={18} className="text-yellow-400 flex-shrink-0" />
+          <div className="rounded-xl p-4 flex items-center gap-3 animate-slide-up"
+               style={{ background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.25)" }}>
+            <Zap size={18} style={{ color: "#F59E0B" }} className="flex-shrink-0" />
             <div>
-              <p className="text-yellow-300 font-semibold text-sm">Limite do plano gratuito atingido</p>
-              <p className="text-yellow-400/70 text-xs mt-0.5">
+              <p className="font-semibold text-sm" style={{ color: "#FCD34D" }}>Limite do plano gratuito atingido</p>
+              <p className="text-xs mt-0.5" style={{ color: "rgba(252,211,77,0.7)" }}>
                 Faça upgrade para o Pro e tenha gerações ilimitadas.{" "}
-                <Link href="/configuracoes" className="underline hover:text-yellow-300">
+                <Link href="/configuracoes" className="underline hover:opacity-80">
                   Ver planos →
                 </Link>
               </p>

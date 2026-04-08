@@ -29,11 +29,24 @@ export function ChatInput({ value, onChange, onSend, loading, disabled }: ChatIn
   };
 
   return (
-    <div className="p-4 border-t border-[#1e2e20]">
-      <div className={cn(
-        "flex items-end gap-3 bg-[#111a13] border rounded-2xl px-4 py-3 transition",
-        disabled ? "border-[#1e2e20] opacity-60" : "border-[#1e2e20] focus-within:border-green-700"
-      )}>
+    <div className="p-4" style={{ borderTop: "1px solid #1E1E2E" }}>
+      <div
+        className={cn(
+          "flex items-end gap-3 rounded-2xl px-4 py-3 transition-all duration-200",
+          disabled ? "opacity-60" : ""
+        )}
+        style={{
+          background: "#14141E",
+          border: "1px solid #1E1E2E",
+          outline: "none",
+        }}
+        onFocusCapture={e => {
+          if (!disabled) (e.currentTarget as HTMLElement).style.border = "1px solid #6EE7B7";
+        }}
+        onBlurCapture={e => {
+          (e.currentTarget as HTMLElement).style.border = "1px solid #1E1E2E";
+        }}
+      >
         <textarea
           ref={ref}
           value={value}
@@ -43,18 +56,19 @@ export function ChatInput({ value, onChange, onSend, loading, disabled }: ChatIn
           disabled={disabled || loading}
           placeholder="Peça uma apresentação, trabalho, prova de estudo, análise de edital..."
           rows={1}
-          className="flex-1 bg-transparent text-white text-sm placeholder-gray-600 resize-none outline-none leading-relaxed"
-          style={{ maxHeight: 140 }}
+          className="flex-1 bg-transparent text-sm resize-none outline-none leading-relaxed"
+          style={{ color: "#F1F5F9", maxHeight: 140, caretColor: "#6EE7B7" }}
         />
         <button
           onClick={onSend}
           disabled={!value.trim() || loading || disabled}
-          className="w-9 h-9 rounded-xl bg-green-600 hover:bg-green-500 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center transition flex-shrink-0"
+          className="w-9 h-9 rounded-xl flex items-center justify-center transition-all flex-shrink-0 btn-shimmer disabled:opacity-40 disabled:cursor-not-allowed"
+          style={{ boxShadow: value.trim() && !disabled ? "0 4px 15px rgba(110,231,183,0.3)" : undefined }}
         >
           <Send size={15} className="text-white" />
         </button>
       </div>
-      <p className="text-center text-gray-700 text-xs mt-2">
+      <p className="text-center text-xs mt-2" style={{ color: "#334155" }}>
         Enter para enviar · Shift+Enter para nova linha
       </p>
     </div>
