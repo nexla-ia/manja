@@ -25,7 +25,7 @@ const ICON_COLORS: Record<string, string> = {
 
 const WELCOME_MSG: ChatMessage = {
   role: "assistant",
-  content: "Fala! 👋 Sou o **Manja**, seu parceiro de estudos com IA.\n\nPosso criar apresentações, trabalhos, provas, resumos, planos de estudo e analisar editais. O que você precisa hoje?",
+  content: "Fala! O que você precisa hoje?",
 };
 
 interface Props {
