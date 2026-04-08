@@ -82,8 +82,9 @@ export async function POST(request: NextRequest) {
         arquivo_tipo: fileResult?.tipo as string ?? null,
       });
 
-      // Atualiza título do chat se for primeira mensagem
-      if (messages.length === 1) {
+      // Atualiza título do chat se for a primeira mensagem do usuário
+      const userMessages = messages.filter((m: { role: string }) => m.role === "user");
+      if (userMessages.length === 1) {
         const titleRes = await anthropic.messages.create({
           model: "claude-sonnet-4-20250514",
           max_tokens: 20,

@@ -5,23 +5,19 @@ import { useChat } from "@/hooks/useChat";
 import { MessageBubble } from "@/components/chat/MessageBubble";
 import { ChatInput } from "@/components/chat/ChatInput";
 import { TypingIndicator } from "@/components/chat/TypingIndicator";
-import { Sparkles, Zap } from "lucide-react";
+import { Sparkles, Zap, Layers, FileText, ClipboardList, BookOpen, CalendarDays, FileSearch } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { ChatMessage } from "@/types/agent";
 
-const SUGESTOES = [
-  { icon: "🎯", label: "Apresentação",   text: "Apresentação sobre Inteligência Artificial com 10 slides" },
-  { icon: "📄", label: "Trabalho",        text: "Trabalho sobre a Revolução Industrial (ABNT)" },
-  { icon: "📋", label: "Prova",           text: "Prova de estudo sobre Direito Constitucional (10 questões)" },
-  { icon: "📚", label: "Resumo",          text: "Resumo do livro 1984 de George Orwell" },
-  { icon: "🗓️", label: "Plano",          text: "Plano de estudos para o ENEM em 3 meses" },
-  { icon: "📜", label: "Edital",          text: "Analise o edital do concurso da Polícia Federal 2024" },
+const SUGESTOES: { Icon: LucideIcon; label: string; text: string; color: string }[] = [
+  { Icon: Layers,        label: "Apresentação", text: "Apresentação sobre Inteligência Artificial com 10 slides",        color: "#F59E0B" },
+  { Icon: FileText,      label: "Trabalho",     text: "Trabalho sobre a Revolução Industrial (ABNT)",                    color: "#3B82F6" },
+  { Icon: ClipboardList, label: "Prova",        text: "Prova de estudo sobre Direito Constitucional (10 questões)",     color: "#F43F5E" },
+  { Icon: BookOpen,      label: "Resumo",       text: "Resumo do livro 1984 de George Orwell",                          color: "#00E5A0" },
+  { Icon: CalendarDays,  label: "Plano",        text: "Plano de estudos para o ENEM em 3 meses",                        color: "#8B5CF6" },
+  { Icon: FileSearch,    label: "Edital",       text: "Analise o edital do concurso da Polícia Federal 2024",           color: "#F59E0B" },
 ];
-
-const ICON_COLORS: Record<string, string> = {
-  "🎯": "#F59E0B", "📄": "#3B82F6", "📋": "#F43F5E",
-  "📚": "#00E5A0", "🗓️": "#8B5CF6", "📜": "#F59E0B",
-};
 
 const WELCOME_MSG: ChatMessage = {
   role: "assistant",
@@ -102,39 +98,34 @@ export default function ChatClient({ chatId, dbMessages }: Props) {
         {/* Quick suggestions — só aparece em chats novos */}
         {isNew && messages.length === 1 && !loading && (
           <div className="grid grid-cols-2 gap-2 mt-2">
-            {SUGESTOES.map((s, i) => {
-              const color = ICON_COLORS[s.icon] ?? "var(--mint)";
-              return (
-                <button
-                  key={i}
-                  onClick={() => sendMessage(s.text)}
-                  className="group flex items-start gap-3 rounded-xl p-3.5 text-left text-xs transition-all duration-200 hover:-translate-y-0.5 anim-fade-up"
-                  style={{
-                    background: "var(--card)",
-                    border: "1px solid var(--border)",
-                    color: "var(--text-2)",
-                    animationDelay: `${i * 55}ms`,
-                  }}
-                  onMouseEnter={e => {
-                    (e.currentTarget as HTMLElement).style.borderColor = `${color}44`;
-                    (e.currentTarget as HTMLElement).style.color = "var(--text)";
-                  }}
-                  onMouseLeave={e => {
-                    (e.currentTarget as HTMLElement).style.borderColor = "var(--border)";
-                    (e.currentTarget as HTMLElement).style.color = "var(--text-2)";
-                  }}
-                >
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 text-base transition-transform duration-200 group-hover:scale-110"
-                       style={{ background: `${color}14` }}>
-                    {s.icon}
-                  </div>
-                  <div>
-                    <p className="font-semibold mb-0.5 text-xs" style={{ color }}>{s.label}</p>
-                    <p className="leading-relaxed opacity-80">{s.text}</p>
-                  </div>
-                </button>
-              );
-            })}
+            {SUGESTOES.map((s, i) => (
+              <button
+                key={i}
+                onClick={() => sendMessage(s.text)}
+                className="group flex items-start gap-3 rounded-xl p-3.5 text-left text-xs transition-all duration-200 hover:-translate-y-0.5 anim-fade-up"
+                style={{
+                  background: "var(--card)",
+                  border: "1px solid var(--border)",
+                  color: "var(--text-2)",
+                  animationDelay: `${i * 50}ms`,
+                }}
+                onMouseEnter={e => {
+                  (e.currentTarget as HTMLElement).style.borderColor = `${s.color}33`;
+                }}
+                onMouseLeave={e => {
+                  (e.currentTarget as HTMLElement).style.borderColor = "var(--border)";
+                }}
+              >
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-transform duration-200 group-hover:scale-110"
+                     style={{ background: `${s.color}14` }}>
+                  <s.Icon size={15} style={{ color: s.color }} strokeWidth={1.5} />
+                </div>
+                <div>
+                  <p className="font-semibold mb-0.5 text-xs" style={{ color: s.color }}>{s.label}</p>
+                  <p className="leading-relaxed opacity-75">{s.text}</p>
+                </div>
+              </button>
+            ))}
           </div>
         )}
 
